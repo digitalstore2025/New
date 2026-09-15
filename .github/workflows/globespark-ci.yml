@@ -34,6 +34,12 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Enforce public-data boundary
+        run: python scripts/guard-public-boundary.py
+
+      - name: Compile repository guards
+        run: python -m py_compile scripts/guard-public-boundary.py evals/evaluate.py
+
       - name: Install frontend dependencies
         run: npm install --no-audit --no-fund
 
@@ -63,9 +69,6 @@ jobs:
 
       - name: Build frontend
         run: npm run build
-
-      - name: Compile evaluator
-        run: python -m py_compile evals/evaluate.py
 
       - name: Run deterministic grounded-RAG fixture
         run: python evals/evaluate.py evals/fixtures/structural-pass.json
