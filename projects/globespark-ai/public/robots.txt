@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://globespark-ai-v11dlz.v2.appdeploy.ai/sitemap.xml

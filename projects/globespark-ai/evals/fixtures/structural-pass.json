@@ -1,0 +1,11 @@
+{
+  "summary": {"text":"Synthetic source-backed summary.","status":"supported","sourceIds":["worldbank:XX:profile"]},
+  "claims": [
+    {"theme":"culture","text":"Synthetic source-backed claim.","status":"supported","sourceIds":["worldbank:XX:profile"]},
+    {"theme":"food","text":"Insufficient evidence.","status":"insufficient_evidence","sourceIds":[]},
+    {"theme":"history","text":"Insufficient evidence.","status":"insufficient_evidence","sourceIds":[]},
+    {"theme":"language","text":"Insufficient evidence.","status":"insufficient_evidence","sourceIds":[]},
+    {"theme":"nature","text":"Insufficient evidence.","status":"insufficient_evidence","sourceIds":[]}
+  ],
+  "sources": [{"id":"worldbank:XX:profile","title":"Synthetic fixture source","provider":"Fixture","url":"https://example.invalid/fixture","retrievedAt":"2026-09-15T00:00:00Z","evidence":{"fixture":true}}]
+}

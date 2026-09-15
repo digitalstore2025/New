@@ -1,0 +1,74 @@
+name: GlobeSpark CI
+
+on:
+  pull_request:
+    paths:
+      - 'projects/globespark-ai/**'
+      - '.github/workflows/globespark-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'projects/globespark-ai/**'
+      - '.github/workflows/globespark-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-evaluate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/globespark-ai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Add CI-only AppDeploy client shim
+        shell: bash
+        run: |
+          mkdir -p node_modules/@appdeploy/client
+          cat > node_modules/@appdeploy/client/package.json <<'EOF'
+          {"name":"@appdeploy/client","version":"0.0.0-ci","type":"module","exports":"./index.js"}
+          EOF
+          cat > node_modules/@appdeploy/client/index.js <<'EOF'
+          export const api = {
+            get: async () => ({ data: {} }),
+            post: async () => ({ data: {} }),
+            put: async () => ({ data: {} }),
+            delete: async () => ({ data: {} })
+          };
+          EOF
+          cat > node_modules/@appdeploy/client/index.d.ts <<'EOF'
+          export const api: {
+            get(path: string, query?: unknown): Promise<{ data: unknown }>;
+            post(path: string, body?: unknown): Promise<{ data: unknown }>;
+            put(path: string, body?: unknown): Promise<{ data: unknown }>;
+            delete(path: string, body?: unknown): Promise<{ data: unknown }>;
+          };
+          EOF
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Compile evaluator
+        run: python -m py_compile evals/evaluate.py
+
+      - name: Run deterministic grounded-RAG fixture
+        run: python evals/evaluate.py evals/fixtures/structural-pass.json
+
+      - name: Dependency audit — critical only
+        run: npm audit --audit-level=critical

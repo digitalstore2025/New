@@ -1,0 +1,97 @@
+# Tests
+
+## Test 1 - Explore Japan with verified data, grounded citations, and the broader AI brief [sanity]
+Viewport: desktop
+Covers: localized country search, GET /api/country/:code, GET /api/heritage/:code, POST /api/grounded-brief, POST /api/facts, Evidence Status, claim-level source links
+Description: Verifies the primary workflow separates authoritative source data, source-grounded generation, and broader uncited AI content.
+
+Steps:
+1. Type "Japan" into the country search field
+2. Select "Japan" from the country matches
+3. Wait for source-backed country data, UNESCO heritage, Source-grounded insights, and the AI country brief
+
+Expected: Japan remains selected; the Evidence Status panel shows World Bank, UNESCO, Grounded RAG and AI as separate layers; every grounded statement marked Supported has at least one visible source link; themes without sufficient evidence visibly abstain instead of inventing a claim.
+
+## Test 2 - Keep multilingual grounded output usable on Arabic mobile
+Viewport: mobile
+Covers: EN/AR/TR locale switch, RTL layout, POST /api/grounded-brief Arabic output, searchable alternative for a small country, ISO-code selection stability
+Description: Verifies the grounded layer and globe selection survive localization and mobile constraints.
+
+Steps:
+1. Activate the "AR" language button
+2. Type "مالطا" into the country search field
+3. Select Malta and wait for the result
+
+Expected: The document is right-to-left, Malta remains selected and highlighted by country code, source sections remain readable, and the grounded section returns Arabic supported/insufficient-evidence states without uncited supported claims.
+
+## Test 3 - Preserve core exploration when grounded synthesis fails
+Viewport: desktop
+Covers: POST /api/grounded-brief failure handling, independent World Bank/UNESCO/facts layers, last-good grounded fallback
+Description: Verifies Grounded RAG is an additive evidence layer and cannot take down the rest of the country experience.
+
+QA Faults:
+```json
+[
+  {
+    "method": "POST",
+    "path": "/api/grounded-brief",
+    "status": 503,
+    "body_json": { "error": "simulated_grounded_failure" }
+  }
+]
+```
+
+Steps:
+1. Search for and select "Brazil"
+2. Wait for the remaining country layers
+3. Observe Source-grounded insights and Evidence Status
+
+Expected: Brazil remains selected; World Bank, UNESCO and the broader AI brief remain usable; Grounded RAG shows a last-good fallback when available or a visible temporary-unavailability state when not.
+
+## Test 4 - Preserve core exploration when UNESCO fails
+Viewport: desktop
+Covers: GET /api/heritage/:code failure handling, partial external-data degradation, grounded-evidence provider degradation
+Description: Verifies one authoritative provider outage does not become a fatal application failure.
+
+QA Faults:
+```json
+[
+  {
+    "method": "GET",
+    "path": "/api/heritage/BR",
+    "status": 502,
+    "body_json": { "error": "simulated_unesco_failure" }
+  }
+]
+```
+
+Steps:
+1. Search for and select "Brazil"
+2. Wait for World Bank and generated layers
+3. Observe the UNESCO and Evidence Status sections
+
+Expected: Brazil remains usable; UNESCO is visibly fallback/unavailable; other layers do not disappear, and no UI labels unavailable UNESCO content as live verified data.
+
+## Test 5 - Keep verified and grounded layers when the broader uncited AI brief fails
+Viewport: desktop
+Covers: POST /api/facts failure handling, source-backed independence, grounded layer independence, Retry guardrail
+Description: Verifies failure of the broader uncited model output does not remove evidence-backed information.
+
+QA Faults:
+```json
+[
+  {
+    "method": "POST",
+    "path": "/api/facts",
+    "status": 500,
+    "body_json": { "error": "simulated_failure" }
+  }
+]
+```
+
+Steps:
+1. Search for and select "Canada"
+2. Wait for source-backed and grounded sections
+3. Observe the AI brief area
+
+Expected: Canada remains selected; World Bank and Grounded RAG stay available; the uncited AI layer either uses an explicitly labeled last-good fallback or displays a visible Retry path.
