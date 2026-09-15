@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+SELF = "scripts/guard-public-boundary.py"
 
 FORBIDDEN_SUFFIXES = {
     ".xlsx", ".xls", ".xlsm", ".ods", ".sqlite", ".sqlite3", ".db",
@@ -68,7 +69,7 @@ def main() -> int:
 
         parts = {part.lower() for part in path.parts}
         if any(token in rel_lower or token in parts for token in FORBIDDEN_PATH_TOKENS):
-            # Policy documents are allowed to discuss these concepts explicitly.
+            # Policy documents may discuss these concepts explicitly.
             if not rel.startswith("docs/"):
                 findings.append(f"private/research path marker: {rel}")
 
@@ -85,7 +86,8 @@ def main() -> int:
             findings.append(f"unexpected non-UTF8 text-like file: {rel}")
             continue
 
-        if not rel.startswith("docs/"):
+        # The guard contains the policy literals by design; docs may explain them.
+        if rel != SELF and not rel.startswith("docs/"):
             for marker in FORBIDDEN_CONTENT_MARKERS:
                 if marker in text:
                     findings.append(f"private workbook marker {marker!r} in {rel}")
