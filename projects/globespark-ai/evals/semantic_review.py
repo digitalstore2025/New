@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""Evidence-to-claim review gate for GlobeSpark Grounded RAG.
+"""Conservative evidence-to-claim review for GlobeSpark Grounded RAG.
 
-This tool is intentionally conservative. Its built-in lexical heuristic never
-claims semantic entailment. It identifies obviously risky supported claims and
-queues paraphrastic/ambiguous claims for semantic review.
-
-Optional judge integration:
-  python evals/semantic_review.py response.json --judge-command 'python my_judge.py'
-
-The judge command receives one JSON object on stdin and must return:
-  {"entailed": true|false, "confidence": 0..1, "rationale": "..."}
-
-No API keys or provider credentials are stored in this repository.
+The built-in heuristic is a triage layer, not a semantic-entailment claim.
+An optional local judge command can be supplied as an argv string. The command
+receives JSON on stdin and must return JSON containing an `entailed` boolean.
+No shell is invoked and no credentials are stored by this tool.
 """
 
 from __future__ import annotations
@@ -19,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shlex
 import subprocess
 import sys
 import unicodedata
@@ -40,10 +34,9 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def tokens(text: str) -> set[str]:
+def token_set(text: str) -> set[str]:
     return {
-        token
-        for token in TOKEN_RE.findall(normalize(text))
+        token for token in TOKEN_RE.findall(normalize(text))
         if len(token) >= 3 and token not in STOP
     }
 
@@ -53,21 +46,18 @@ def flatten(value: Any) -> Iterable[str]:
         return
     if isinstance(value, bool):
         yield "true" if value else "false"
-        return
-    if isinstance(value, (str, int, float)):
+    elif isinstance(value, (str, int, float)):
         yield str(value)
-        return
-    if isinstance(value, list):
+    elif isinstance(value, list):
         for item in value:
             yield from flatten(item)
-        return
-    if isinstance(value, dict):
+    elif isinstance(value, dict):
         for key, item in value.items():
             yield str(key)
             yield from flatten(item)
 
 
-def iter_statements(payload: dict[str, Any]) -> Iterable[dict[str, Any]]:
+def statements(payload: dict[str, Any]) -> Iterable[dict[str, Any]]:
     summary = payload.get("summary")
     if isinstance(summary, dict):
         yield {"kind": "summary", **summary}
@@ -78,46 +68,38 @@ def iter_statements(payload: dict[str, Any]) -> Iterable[dict[str, Any]]:
                 yield {"kind": "claim", **claim}
 
 
-def evidence_for(payload: dict[str, Any], source_ids: list[str]) -> tuple[str, list[str]]:
+def cited_evidence(payload: dict[str, Any], source_ids: list[str]) -> tuple[str, list[str]]:
     sources = payload.get("sources")
     source_map = {
-        item.get("id"): item
-        for item in sources
+        item.get("id"): item for item in sources
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     } if isinstance(sources, list) else {}
     chunks: list[str] = []
     resolved: list[str] = []
     for source_id in source_ids:
         source = source_map.get(source_id)
-        if not isinstance(source, dict):
-            continue
-        resolved.append(source_id)
-        chunks.extend(flatten(source.get("evidence")))
+        if isinstance(source, dict):
+            resolved.append(source_id)
+            chunks.extend(flatten(source.get("evidence")))
     return " ".join(chunks), resolved
 
 
-def lexical_review(statement: str, evidence: str) -> dict[str, Any]:
-    statement_tokens = tokens(statement)
-    evidence_tokens = tokens(evidence)
-    overlap = statement_tokens & evidence_tokens
-    coverage = len(overlap) / len(statement_tokens) if statement_tokens else 0.0
-    claim_numbers = set(NUMBER_RE.findall(normalize(statement)))
-    evidence_numbers = set(NUMBER_RE.findall(normalize(evidence)))
-    unmatched_numbers = sorted(claim_numbers - evidence_numbers)
-
+def heuristic(claim: str, evidence: str) -> dict[str, Any]:
+    claim_tokens = token_set(claim)
+    evidence_tokens = token_set(evidence)
+    coverage = len(claim_tokens & evidence_tokens) / len(claim_tokens) if claim_tokens else 0.0
+    unmatched_numbers = sorted(
+        set(NUMBER_RE.findall(normalize(claim))) - set(NUMBER_RE.findall(normalize(evidence)))
+    )
     if unmatched_numbers:
         disposition = "fail"
-        reason = "claim contains numeric values absent from cited evidence"
+        reason = "numeric claim is absent from cited evidence"
     elif coverage >= 0.72:
         disposition = "likely_supported"
-        reason = "high lexical overlap; semantic entailment still not proven"
-    elif coverage >= 0.35:
-        disposition = "needs_review"
-        reason = "partial overlap may reflect paraphrase or unsupported detail"
+        reason = "high lexical overlap; semantic entailment is not proven"
     else:
         disposition = "needs_review"
-        reason = "low lexical overlap; semantic review required"
-
+        reason = "semantic review required for paraphrase or unsupported detail"
     return {
         "disposition": disposition,
         "tokenCoverage": round(coverage, 6),
@@ -127,77 +109,69 @@ def lexical_review(statement: str, evidence: str) -> dict[str, Any]:
     }
 
 
-def run_judge(command: str, payload: dict[str, Any]) -> dict[str, Any]:
+def run_judge(command: str, claim: str, evidence: str, source_ids: list[str]) -> dict[str, Any]:
+    argv = shlex.split(command)
+    if not argv:
+        return {"status": "judge_error", "error": "empty judge command"}
     completed = subprocess.run(
-        command,
-        input=json.dumps(payload, ensure_ascii=False),
+        argv,
+        input=json.dumps({"claim": claim, "evidence": evidence, "sourceIds": source_ids}, ensure_ascii=False),
         text=True,
-        shell=True,
         capture_output=True,
         timeout=45,
         check=False,
     )
     if completed.returncode != 0:
-        return {
-            "status": "judge_error",
-            "returnCode": completed.returncode,
-            "stderr": completed.stderr[-1200:],
-        }
+        return {"status": "judge_error", "returnCode": completed.returncode, "stderr": completed.stderr[-1000:]}
     try:
         value = json.loads(completed.stdout)
     except json.JSONDecodeError:
-        return {"status": "judge_error", "stderr": "judge returned non-JSON output"}
+        return {"status": "judge_error", "error": "judge returned non-JSON output"}
     if not isinstance(value, dict) or not isinstance(value.get("entailed"), bool):
-        return {"status": "judge_error", "stderr": "judge response schema invalid"}
-    confidence = value.get("confidence")
-    if not isinstance(confidence, (int, float)):
-        confidence = 0.0
+        return {"status": "judge_error", "error": "judge response schema invalid"}
+    confidence = value.get("confidence", 0.0)
+    confidence = float(confidence) if isinstance(confidence, (int, float)) else 0.0
     return {
         "status": "evaluated",
         "entailed": value["entailed"],
-        "confidence": max(0.0, min(1.0, float(confidence))),
+        "confidence": max(0.0, min(1.0, confidence)),
         "rationale": str(value.get("rationale", ""))[:1000],
     }
 
 
 def evaluate(payload: dict[str, Any], judge_command: str | None) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
-    for statement in iter_statements(payload):
-        if statement.get("status") != "supported":
+    for item in statements(payload):
+        if item.get("status") != "supported":
             continue
-        text = statement.get("text") if isinstance(statement.get("text"), str) else ""
-        ids = statement.get("sourceIds")
-        ids = [item for item in ids if isinstance(item, str)] if isinstance(ids, list) else []
-        evidence, resolved = evidence_for(payload, ids)
-        lexical = lexical_review(text, evidence)
+        claim = item.get("text") if isinstance(item.get("text"), str) else ""
+        raw_ids = item.get("sourceIds")
+        source_ids = [value for value in raw_ids if isinstance(value, str)] if isinstance(raw_ids, list) else []
+        evidence, resolved = cited_evidence(payload, source_ids)
         row: dict[str, Any] = {
-            "kind": statement.get("kind"),
-            "theme": statement.get("theme"),
-            "text": text,
-            "sourceIds": ids,
+            "kind": item.get("kind"),
+            "theme": item.get("theme"),
+            "text": claim,
+            "sourceIds": source_ids,
             "resolvedSourceIds": resolved,
-            "lexical": lexical,
+            "heuristic": heuristic(claim, evidence),
         }
         if judge_command:
-            row["judge"] = run_judge(
-                judge_command,
-                {"claim": text, "evidence": evidence, "sourceIds": resolved},
-            )
+            row["judge"] = run_judge(judge_command, claim, evidence, resolved)
         rows.append(row)
 
-    hard_failures = sum(row["lexical"]["disposition"] == "fail" for row in rows)
-    judge_failures = sum(
+    hard_failures = sum(row["heuristic"]["disposition"] == "fail" for row in rows)
+    high_confidence_judge_failures = sum(
         row.get("judge", {}).get("status") == "evaluated"
         and not row.get("judge", {}).get("entailed", False)
         and float(row.get("judge", {}).get("confidence", 0.0)) >= 0.75
         for row in rows
     )
-    review_queue = sum(row["lexical"]["disposition"] == "needs_review" for row in rows)
     return {
         "supportedStatements": len(rows),
         "hardFailures": hard_failures,
-        "judgeHighConfidenceFailures": judge_failures,
-        "needsReview": review_queue,
+        "judgeHighConfidenceFailures": high_confidence_judge_failures,
+        "needsReview": sum(row["heuristic"]["disposition"] == "needs_review" for row in rows),
         "semanticJudgeConfigured": bool(judge_command),
         "rows": rows,
     }
@@ -207,11 +181,7 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("response", type=Path)
     parser.add_argument("--judge-command")
-    parser.add_argument(
-        "--fail-on-review",
-        action="store_true",
-        help="Treat heuristic needs_review results as CI failures.",
-    )
+    parser.add_argument("--fail-on-review", action="store_true")
     args = parser.parse_args(argv[1:])
     payload = json.loads(args.response.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
