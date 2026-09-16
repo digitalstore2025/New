@@ -7,17 +7,20 @@ on:
       - '.github/workflows/globespark-lock-bootstrap.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   lockfile:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: projects/globespark-ai
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
@@ -25,10 +28,16 @@ jobs:
           package-manager-cache: false
       - name: Generate deterministic lockfile
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-      - name: Emit compressed lockfile for bootstrap
+      - name: Commit lockfile to PR branch
         shell: bash
         run: |
-          echo 'LOCKFILE_GZIP_BASE64_BEGIN'
-          gzip -9 -c package-lock.json | base64 -w0
-          echo
-          echo 'LOCKFILE_GZIP_BASE64_END'
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo 'package-lock.json already current'
+            exit 0
+          fi
+          git commit -m 'chore(globespark): add deterministic npm lockfile'
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
