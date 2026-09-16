@@ -8,9 +8,9 @@ Description: Verifies the primary workflow separates authoritative source data, 
 Steps:
 1. Type "Japan" into the country search field
 2. Select "Japan" from the country matches
-3. Wait for source-backed country data, UNESCO heritage, Source-grounded insights, and the AI country brief
+3. Use the rotate-right control once and zoom-in control once, then wait for source-backed country data, UNESCO heritage, Source-grounded insights, and the AI country brief
 
-Expected: Japan remains selected; the Evidence Status panel shows World Bank, UNESCO, Grounded RAG and AI as separate layers; every grounded statement marked Supported has at least one visible source link; themes without sufficient evidence visibly abstain instead of inventing a claim.
+Expected: Japan remains selected with `data-selected-code="JP"`; the globe moves without clearing selection; a visible map quick-data card shows Japan with World Bank capital/region/population state; the Evidence Status panel shows World Bank, UNESCO, Grounded RAG and AI as separate layers; every grounded statement marked Supported has at least one visible source link; themes without sufficient evidence visibly abstain instead of inventing a claim.
 
 ## Test 2 - Keep multilingual grounded output usable on Arabic mobile
 Viewport: mobile
@@ -20,9 +20,9 @@ Description: Verifies the grounded layer and globe selection survive localizatio
 Steps:
 1. Activate the "AR" language button
 2. Type "مالطا" into the country search field
-3. Select Malta and wait for the result
+3. Select Malta, drag the globe horizontally, activate zoom-in, and wait for the result
 
-Expected: The document is right-to-left, Malta remains selected and highlighted by country code, source sections remain readable, and the grounded section returns Arabic supported/insufficient-evidence states without uncited supported claims.
+Expected: The document is right-to-left, Malta remains selected and highlighted by `data-selected-code="MT"` after movement, the compact map data card remains readable on mobile, source sections remain readable, and the grounded section returns Arabic supported/insufficient-evidence states without uncited supported claims.
 
 ## Test 3 - Preserve core exploration when grounded synthesis fails
 Viewport: desktop
