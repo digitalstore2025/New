@@ -408,6 +408,7 @@ function App() {
           <GlobeCanvas
             selectedCode={selected?.code}
             focus={focus}
+            locale={locale}
             onSelect={chooseCountry}
             labels={{
               globeLabel: t.globeLabel,
@@ -423,6 +424,50 @@ function App() {
               resetGlobe: t.resetGlobe,
             }}
           />
+
+          {selected && (
+            <section
+              className={`map-quick-card is-${metadataState}`}
+              aria-live="polite"
+              data-country-code={selected.code || ''}
+              data-source="World Bank"
+              data-state={metadataState}
+            >
+              <div className="map-quick-country">
+                <span className="map-quick-flag">{flagFromCode(selected.code)}</span>
+                <div>
+                  <strong>{selected.name}</strong>
+                  <span>
+                    {metadataLoading
+                      ? '…'
+                      : `${t.capital}: ${metadata?.capital || t.unavailable}`}
+                  </span>
+                </div>
+              </div>
+              <div className="map-quick-metrics">
+                <div>
+                  <span>{t.region}</span>
+                  <strong>{metadataLoading ? '…' : metadata?.region || t.unavailable}</strong>
+                </div>
+                <div>
+                  <span>{t.population}</span>
+                  <strong>
+                    {metadataLoading
+                      ? '…'
+                      : metadata?.population != null
+                        ? new Intl.NumberFormat(locale, {
+                            notation: 'compact',
+                            maximumFractionDigits: 1,
+                          }).format(metadata.population)
+                        : t.unavailable}
+                  </strong>
+                </div>
+              </div>
+              <span className="map-quick-source">
+                {t.sourceWorldBank} · {t.statusLabels[metadataState]}
+              </span>
+            </section>
+          )}
         </div>
 
         <aside className="facts-panel" aria-live="polite">
