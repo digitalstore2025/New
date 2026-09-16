@@ -38,8 +38,8 @@ jobs:
       - name: Enforce public-data boundary
         run: python scripts/guard-public-boundary.py
 
-      - name: Compile repository guards
-        run: python -m py_compile scripts/guard-public-boundary.py evals/evaluate.py
+      - name: Compile repository guards and evaluators
+        run: python -m py_compile scripts/guard-public-boundary.py evals/evaluate.py evals/semantic_review.py
 
       - name: Install frontend dependencies
         run: npm install --no-audit --no-fund
@@ -71,8 +71,11 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Run deterministic grounded-RAG fixture
+      - name: Run deterministic grounded-RAG structural fixture
         run: python evals/evaluate.py evals/fixtures/structural-pass.json
+
+      - name: Run evidence-to-claim review fixture
+        run: python evals/semantic_review.py evals/fixtures/structural-pass.json
 
       - name: Dependency audit — critical only
         run: npm audit --audit-level=critical
