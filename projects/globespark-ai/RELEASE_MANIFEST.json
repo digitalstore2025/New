@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "project": "GlobeSpark AI",
+  "environment": "production",
+  "publicUrl": "https://globespark-ai-v11dlz.v2.appdeploy.ai/",
+  "appDeploy": {
+    "appId": "globespark-ai-v11dlz",
+    "snapshot": "1789506930492",
+    "status": "ready",
+    "qa": {
+      "frontendErrors": 0,
+      "networkErrors": 0,
+      "qaTimestamp": 1789506962937,
+      "webScreenshot": "https://appdeployai-v2-qa-screenshots.s3.us-east-1.amazonaws.com/globespark-ai-v11dlz/1789506983667/web.png",
+      "mobileScreenshot": "https://appdeployai-v2-qa-screenshots.s3.us-east-1.amazonaws.com/globespark-ai-v11dlz/1789506983667/mobile.png"
+    },
+    "e2e": {
+      "status": "not_reported",
+      "raw": null,
+      "note": "AppDeploy returned e2e_tests=null for this production deployment."
+    },
+    "rollbackSnapshot": "1789506930492"
+  },
+  "capabilities": {
+    "locales": ["en", "ar", "tr"],
+    "map": ["canvas2d", "inertial_drag", "smooth_zoom", "pinch_zoom", "animated_fly_to", "localized_hover", "small_country_hit_tolerance", "iso_stable_selection", "selected_country_marker"],
+    "verifiedProviders": ["World Bank", "UNESCO DataHub"],
+    "groundedRag": true,
+    "claimLevelSourceIds": true,
+    "deterministicCitationValidation": true,
+    "explicitAbstention": true,
+    "quickCountryCard": true
+  },
+  "github": {
+    "repository": "digitalstore2025/New",
+    "branch": "feat/globespark-ai-import",
+    "pullRequest": 1,
+    "role": "review_ci_mirror",
+    "sourceOfTruth": false
+  },
+  "privacy": {
+    "privateProspectingDataIncluded": false,
+    "credentialsIncluded": false,
+    "paidConnectorOutputsIncluded": false
+  },
+  "generatedAt": "2026-09-16T17:00:00+03:00"
+}
