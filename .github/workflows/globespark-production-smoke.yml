@@ -1,0 +1,48 @@
+name: GlobeSpark Production Smoke
+
+on:
+  pull_request:
+    paths:
+      - 'projects/globespark-ai/**'
+      - '.github/workflows/globespark-production-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: projects/globespark-ai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Install pinned Playwright runner
+        run: npm install --no-save --package-lock=false --ignore-scripts 'playwright@1.63.0'
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production smoke against public URL
+        env:
+          GLOBESPARK_BASE_URL: https://globespark-ai-v11dlz.v2.appdeploy.ai/
+        run: node e2e/production-smoke.mjs
+
+      - name: Upload smoke screenshots
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: globespark-production-smoke-screenshots
+          path: projects/globespark-ai/e2e/artifacts/*.png
+          if-no-files-found: warn
+          retention-days: 14
