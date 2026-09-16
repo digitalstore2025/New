@@ -1,0 +1,34 @@
+name: GlobeSpark Lock Bootstrap
+
+on:
+  pull_request:
+    paths:
+      - 'projects/globespark-ai/package.json'
+      - '.github/workflows/globespark-lock-bootstrap.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/globespark-ai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Generate deterministic lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Emit compressed lockfile for bootstrap
+        shell: bash
+        run: |
+          echo 'LOCKFILE_GZIP_BASE64_BEGIN'
+          gzip -9 -c package-lock.json | base64 -w0
+          echo
+          echo 'LOCKFILE_GZIP_BASE64_END'
