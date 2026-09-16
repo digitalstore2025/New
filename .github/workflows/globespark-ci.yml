@@ -28,7 +28,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: '22'
-          package-manager-cache: false
+          cache: npm
+          cache-dependency-path: projects/globespark-ai/package-lock.json
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -41,8 +42,8 @@ jobs:
       - name: Compile repository guards and evaluators
         run: python -m py_compile scripts/guard-public-boundary.py evals/evaluate.py evals/semantic_review.py
 
-      - name: Install frontend dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install frontend dependencies from lockfile
+        run: npm ci --no-audit --no-fund
 
       - name: Add CI-only AppDeploy client shim
         shell: bash
