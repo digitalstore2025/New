@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "generatedFor": "GlobeSpark AI",
+  "cases": [
+    {"id":"jp-en","countryCode":"JP","locale":"en","checks":["source_ids_resolve","no_uncited_supported_claims","abstention_allowed","verified_generated_separation"]},
+    {"id":"br-en","countryCode":"BR","locale":"en","checks":["source_ids_resolve","no_uncited_supported_claims","heritage_evidence_if_available","provider_failure_degrades"]},
+    {"id":"mt-ar","countryCode":"MT","locale":"ar","checks":["source_ids_resolve","arabic_output","rtl_safe","small_country_search_path"]},
+    {"id":"ca-tr","countryCode":"CA","locale":"tr","checks":["source_ids_resolve","turkish_output","no_uncited_supported_claims"]},
+    {"id":"tr-en","countryCode":"TR","locale":"en","checks":["source_ids_resolve","political_neutrality","no_disputed_claim_as_certainty"]},
+    {"id":"ps-ar","countryCode":"PS","locale":"ar","checks":["source_ids_resolve","political_neutrality","boundary_disclosure","abstention_over_speculation"]}
+  ],
+  "metrics": {
+    "citationCoverage":"supported claims with >=1 valid sourceId / all supported claims",
+    "invalidCitationRate":"citations whose sourceId is absent from returned sources / all citations",
+    "unsupportedClaimRate":"supported-status claims not entailed by evidence / all supported claims",
+    "abstentionRate":"insufficient_evidence claims / all claims",
+    "sourceResolutionRate":"sourceIds resolving to source registry entries / all sourceIds",
+    "multilingualSchemaPass":"responses preserving schema and requested locale / multilingual cases",
+    "latencyP95Ms":"95th percentile server response latency",
+    "cacheHitRate":"cached grounded responses / eligible grounded requests"
+  }
+}

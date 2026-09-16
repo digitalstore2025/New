@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index,follow" />
+  <meta name="description" content="GlobeSpark AI data methodology, source provenance, AI disclosure, freshness policy and public/private data boundary." />
+  <link rel="canonical" href="https://globespark-ai-v11dlz.v2.appdeploy.ai/data-methodology.html" />
+  <title>GlobeSpark AI — Data Methodology & Provenance</title>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"GlobeSpark AI Data Methodology & Provenance","url":"https://globespark-ai-v11dlz.v2.appdeploy.ai/data-methodology.html","about":[{"@type":"Dataset","name":"World Bank country metadata"},{"@type":"Dataset","name":"UNESCO World Heritage whc001"},{"@type":"Dataset","name":"Natural Earth country geometry"}]}</script>
+  <style>body{max-width:880px;margin:0 auto;padding:40px 22px 80px;background:#050914;color:#dce8f8;font:16px/1.7 system-ui,-apple-system,Segoe UI,sans-serif}a{color:#67e8f9}h1,h2{color:#f4f8ff;line-height:1.15}code{background:#111c30;padding:2px 6px;border-radius:5px}.card{padding:18px 20px;margin:16px 0;border:1px solid #243550;border-radius:14px;background:#0a1222}.label{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:#67e8f9}</style>
+</head>
+<body>
+  <p><a href="./">← GlobeSpark AI</a></p>
+  <h1>Data methodology & provenance</h1>
+  <p>GlobeSpark separates source-backed data from generated explanation. This page documents the boundary so users, crawlers and AI systems can distinguish verified, derived and generated information.</p>
+  <div class="card"><div class="label">Source-backed</div><h2>World Bank</h2><p>Country metadata and the latest available population observation are requested from the World Bank V2 API. Source retrieval dates are shown in the product where available.</p><p><a href="https://datahelpdesk.worldbank.org/knowledgebase/articles/889392">World Bank API documentation</a></p></div>
+  <div class="card"><div class="label">Source-backed</div><h2>UNESCO World Heritage</h2><p>World Heritage records are queried from UNESCO DataHub dataset <code>whc001</code>. GlobeSpark displays short structured fields and links to official UNESCO World Heritage pages rather than republishing long descriptions or images.</p><p><a href="https://datacatalog.unesco.org/explore/dataset/whc001/">UNESCO DataHub dataset</a></p></div>
+  <div class="card"><div class="label">Geospatial</div><h2>Natural Earth</h2><p>Country geometry is derived from Natural Earth at world-scale resolution. Boundary representations can reflect de facto control and do not constitute a legal or political position.</p><p><a href="https://www.naturalearthdata.com/about/terms-of-use/">Natural Earth terms of use</a></p></div>
+  <div class="card"><div class="label">Generated</div><h2>AI country briefs</h2><p>Culture, food, history, language and nature briefs are generated separately from verified source fields. They are explicitly labeled as AI content and should not be treated as source-cited evidence for consequential decisions.</p></div>
+  <div class="card"><div class="label">Reliability</div><h2>Graceful degradation</h2><p>External calls use bounded timeouts and retries. After a successful visit, the browser may retain a last-good copy so a later temporary provider failure can degrade gracefully. Source timestamps remain visible; stale fallback content is labeled.</p></div>
+  <div class="card"><div class="label">Evidence status</div><h2>Live, cached, fallback and unavailable are distinct states</h2><p>The country interface exposes source state and retrieval/generation dates rather than collapsing provenance into a synthetic trust score. World Bank and UNESCO are source-backed layers; the AI brief is a generated explanation layer.</p></div>
+  <div class="card"><div class="label">Grounded generation</div><h2>Citations and abstention</h2><p>The grounded layer builds an evidence pack on the server from the World Bank and UNESCO DataHub, then asks the model to synthesize only from those fields. Every supported generated statement must resolve to one or more source identifiers returned with the response. If the evidence pack does not directly support a theme, the system returns an explicit insufficient-evidence state instead of filling the gap from model memory.</p></div>
+  <div class="card"><div class="label">AI evaluation</div><h2>Evaluation contract</h2><p>The evaluation harness measures citation coverage, invalid citation rate, unsupported-claim rate, abstention behaviour, source resolution, multilingual schema compliance, latency and cache behaviour. Retrieval recall and ranking metrics will be activated when a multi-document retrieval index is introduced. No single synthetic trust score is used.</p></div>
+  <div class="card"><div class="label">Data boundary</div><h2>Private research data is isolated</h2><p>Private prospecting, outreach, scoring or institutional research datasets are not published through GlobeSpark country pages, are not used as verification sources, and are excluded from public search and AI content generation. Any future organizations-intelligence module requires a separate access-control and review policy.</p></div>
+  <h2>Content classes</h2>
+  <ul><li><strong>Verified/source-backed:</strong> returned by named authoritative data providers.</li><li><strong>Derived:</strong> deterministic transformations or display formatting from source-backed fields.</li><li><strong>Generated:</strong> model-produced explanatory text, clearly separated from verified fields.</li></ul>
+  <p>Updated: 15 September 2026.</p>
+</body>
+</html>
