@@ -4,7 +4,7 @@
 
 - URL: `https://globespark-country-pages-canary-gknkkx.v2.appdeploy.ai/`
 - AppDeploy app: `globespark-country-pages-canary-gknkkx`
-- Applied snapshot: `1789570541700`
+- Applied snapshot: `1789589847093`
 - Deployment status: `ready`
 - QA: 0 reported frontend errors, 0 reported network errors
 - AppDeploy E2E: not reported (`e2e_tests = null`)
@@ -13,19 +13,28 @@
 
 The canary contains six countries across English, Arabic and Turkish static routes. It remains intentionally `noindex,follow` and is not an indexed production SEO surface.
 
-## Hardening now applied
+## Data/content refresh now applied
 
 - World Bank country profile refresh at static build time.
-- World Bank `SP.POP.TOTL` population refresh at static build time.
-- Visible source state: `live` build-time retrieval or clearly labeled bundled seed fallback.
-- Visible retrieval timestamp for live data.
+- World Bank `SP.POP.TOTL` latest available population refresh at static build time.
+- UNESCO DataHub World Heritage refresh at static build time, with two approved host attempts.
+- Visible World Bank and UNESCO provider rows with independent source states.
+- Visible retrieval timestamps only when a provider was actually retrieved live.
+- World Bank fallback remains clearly labeled bundled seed data; it never receives a fake retrieval timestamp.
+- UNESCO failure degrades independently to `unavailable`; it does not fabricate a count or timestamp.
 - Population year displayed when available.
+- UNESCO World Heritage count displayed when available.
+- Up to three recent UNESCO World Heritage records are surfaced with links to UNESCO property pages where an ID exists.
+- EN/AR/TR page summaries and provenance copy updated to describe the real build-time source behavior.
 - Absolute canonical URL per locale/country page.
 - Absolute `hreflang` alternates for `en`, `ar`, and `tr`.
 - `x-default` alternate pointing to the English route.
-- JSON-LD `WebPage` metadata with `url`, `inLanguage`, `dateModified`, country entity and World Bank citation.
-- Source fallback never receives a fake retrieval timestamp.
+- JSON-LD `WebPage` metadata now cites both World Bank and UNESCO and retains `url`, `inLanguage`, `dateModified`, and Country entity data.
 - Private prospecting/research data remains excluded.
+
+## Production data note
+
+The interactive production app already fetches World Bank country/population fields and UNESCO World Heritage records at request time. Its Grounded RAG evidence pack stores provider retrieval timestamps and validates returned source IDs before marking claims supported. Therefore this refresh does not replace source-backed production data with manually copied values.
 
 ## Promotion gate
 
@@ -41,4 +50,4 @@ Do not remove `noindex` until all of the following are proven on the final hostn
 
 ## Current decision
 
-The canary is technically healthier but remains a validation surface. `noindex,follow` stays in place.
+The canary now has live build-time World Bank + UNESCO refresh with explicit provider degradation, but remains a validation surface. `noindex,follow` stays in place.
