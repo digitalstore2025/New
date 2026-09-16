@@ -27,7 +27,7 @@ The interactive globe uses the current external world-scale GeoJSON source, brow
 - `evals/golden-set.json` defines multilingual/adversarial evaluation cases.
 
 ## DevSecOps gates
-GitHub workflows are scoped to GlobeSpark paths and currently cover:
+GitHub workflows are scoped to GlobeSpark paths and cover:
 
 - deterministic `npm ci` installation from `package-lock.json`
 - production frontend build
@@ -38,6 +38,8 @@ GitHub workflows are scoped to GlobeSpark paths and currently cover:
 - Semgrep OWASP-oriented SAST
 - Trivy vulnerability, secret and misconfiguration scanning
 - CycloneDX SBOM generation as a CI artifact
+
+Latest reviewed baseline: GlobeSpark CI, GlobeSpark Security, Lint and Validate Data are green.
 
 ## Privacy boundary
 Private institutional prospecting/research data is deliberately excluded from public country pages, public SEO surfaces and public AI context. See `docs/DATA_INTEGRATION_BOUNDARY.md` and `docs/ORGANIZATIONS_INTELLIGENCE.md`.
