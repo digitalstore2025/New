@@ -62,3 +62,20 @@ jobs:
           ignore-unfixed: true
           scanners: 'vuln,secret,misconfig'
           severity: 'HIGH,CRITICAL'
+
+      - name: Generate CycloneDX SBOM
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: projects/globespark-ai
+          format: cyclonedx
+          output: projects/globespark-ai/globespark-sbom.cdx.json
+          exit-code: '0'
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: globespark-cyclonedx-sbom
+          path: projects/globespark-ai/globespark-sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30
